@@ -1,0 +1,56 @@
+name: Build And Publish
+run-name: ${{ gitea.actor }} runs ci pipeline
+on: [ push ]
+
+jobs:
+  BuildAndPublish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: https://github.com/actions/checkout@v4
+
+      - name: Use Node.js
+        uses: https://github.com/actions/setup-node@v3
+        with:
+          node-version: '18.17.0'
+
+      - name: Installing dependencies
+        run: npm ci
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{secrets.DOCKER_HUB_USERNAME}}
+          password: ${{secrets.DOCKER_HUB_PASSWORD}}
+
+      - name: Set up Docker Buildx
+        uses: https://github.com/docker/setup-buildx-action@v3
+        with:
+          config-inline: |
+            [registry."${{var.DOCKER_REGISTRY_IP}}:${DOCKER_REGISTRY_PORT}}"] # IP from local gitea instance
+              http = true
+              insecure = true
+
+      - name: Build and push Docker image
+        uses: https://github.com/docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: rfreeman420/nextjs-docker:v1
+
+      - name: Stop the docker container
+        continue-on-error: true
+        run: sudo docker stop nextjs-docker
+
+      - name: Remove the docker container
+        continue-on-error: true
+        run: sudo docker rm nextjs-docker
+
+      - name: Pull the Docker image
+        run: sudo docker pull rfreeman420/nextjs-docker:v1
+
+      - name: Run the Docker container
+        run: sudo docker run -d --name nextjs-docker -p ${{vars.TAILSCALE_IP}}:7777:3000 rfreeman420/nextjs-docker:v1
