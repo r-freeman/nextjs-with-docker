@@ -6,6 +6,10 @@ jobs:
   BuildAndPublish:
     runs-on: ubuntu-latest
     steps:
+      - name: Add mask
+        run: |
+          echo "::add-mask::${{ vars.TAILSCALE_IP }}"
+
       - name: Checkout code
         uses: https://github.com/actions/checkout@v4
 
