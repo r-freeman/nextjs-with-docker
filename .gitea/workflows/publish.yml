@@ -52,4 +52,4 @@ jobs:
         run: sudo docker pull rfreeman420/nextjs-docker:v1
 
       - name: Run the Docker container
-        run: sudo docker run -d --name nextjs-docker -p ${{vars.TAILSCALE_IP}}:7777:3000 rfreeman420/nextjs-docker:v1
+        run: sudo docker run -d --restart unless-stopped --name nextjs-docker -p ${{vars.TAILSCALE_IP}}:7777:3000 rfreeman420/nextjs-docker:v1
